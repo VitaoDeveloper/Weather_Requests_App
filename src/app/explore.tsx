@@ -1,180 +1,173 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
+import { fetchByCity } from '@/api/weather';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+export default function SearchScreen() {
+  const [cityName, setCityName] = useState('');
+  const [data, setData] = useState<unknown>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async () => {
+    if (!cityName.trim()) {
+      setError('Insira um nome de cidade.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setData(null);
+    try {
+      const result = await fetchByCity(cityName.trim());
+      setData(result);
+    } catch {
+      setError('Erro ao buscar. Verifique o nome da cidade e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
-  const theme = useTheme();
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText type="title" style={styles.title}>
+            Buscar por cidade
+          </ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+            Digite o nome de uma cidade para consultar o clima.
           </ThemedText>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
+          <ThemedView style={styles.searchRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: London, Tokyo, São Paulo"
+              placeholderTextColor="#999"
+              value={cityName}
+              onChangeText={setCityName}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+                loading && styles.buttonDisabled,
+              ]}
+              disabled={loading}
+              onPress={handleSearch}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <ThemedText style={styles.buttonText}>Buscar</ThemedText>
+              )}
             </Pressable>
-          </ExternalLink>
-        </ThemedView>
+          </ThemedView>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
+          {error ? (
+            <ThemedText themeColor="textSecondary" style={styles.error}>
+              {error}
             </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+          ) : null}
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
+          <ThemedView type="backgroundElement" style={styles.dataBox}>
+            {data ? (
+              <ThemedText type="code" style={styles.jsonText}>
+                {JSON.stringify(data, null, 2)}
               </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+            ) : (
+              <ThemedText themeColor="textSecondary" style={styles.placeholder}>
+                {loading ? 'Buscando...' : 'Digite uma cidade e pressione Buscar'}
+              </ThemedText>
+            )}
+          </ThemedView>
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
   container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
+    flex: 1,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+    maxWidth: MaxContentWidth,
+  },
+  scrollContent: {
+    padding: Spacing.four,
     gap: Spacing.three,
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingBottom: BottomTabInset + Spacing.six,
   },
-  centerText: {
+  title: {
     textAlign: 'center',
   },
-  pressed: {
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: Spacing.two,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignSelf: 'stretch',
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: Spacing.one,
+    padding: Spacing.two,
+    fontSize: 16,
+    color: '#000',
+    backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#eb6e4b',
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    borderRadius: Spacing.two,
+    justifyContent: 'center',
+  },
+  buttonPressed: {
     opacity: 0.7,
   },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
+  buttonDisabled: {
+    opacity: 0.5,
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
-  collapsibleContent: {
-    alignItems: 'center',
+  error: {
+    textAlign: 'center',
   },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
+  dataBox: {
+    alignSelf: 'stretch',
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
+    minHeight: 100,
   },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  jsonText: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  placeholder: {
+    textAlign: 'center',
+    paddingVertical: Spacing.four,
   },
 });
