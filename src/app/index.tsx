@@ -1,29 +1,49 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
+  Switch,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { fetchByCoords } from '@/api/weather';
+import { fetchByCity, fetchByCoords } from '@/api/weather';
+import type { ApiResponse } from '@/types/ApiResponse';
+import type { ModalProps } from '@/types/ModalProps';
+import { SendResponse } from '@/utils/sendResponse';
+import { DataTable } from '@/components/DataTable';
+import { Modal } from '@/components/Modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 
 export default function WeatherScreen() {
-  const [data, setData] = useState<unknown>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<ApiResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(0); // 0=none, 1=coords, 2=manual, 3=city
   const [coords, setCoords] = useState({ lat: 0, lon: 0 });
-  const [coordsModalOpen, setCoordsModalOpen] = useState(false);
-  const [latInput, setLatInput] = useState('');
-  const [lonInput, setLonInput] = useState('');
+  const [modalsOpen, setModalsOpen] = useState([false, false]);
+
+  const [persistEnabled, setPersistEnabled] = useState(() => {
+    if (typeof localStorage === 'undefined') return false;
+    const stored = localStorage.getItem('WEATHER_PERSIST_ENABLED');
+    return stored === null ? true : stored === 'true';
+  });
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('WEATHER_PERSIST_ENABLED', String(persistEnabled));
+    }
+  }, [persistEnabled]);
+
+  useEffect(() => {
+    if (!persistEnabled) return;
+    if (data) SendResponse.send('SUCCESS', JSON.stringify(data));
+    if (error) SendResponse.send('ERROR', error);
+  }, [data, error, persistEnabled]);
 
   useEffect(() => {
     (async () => {
@@ -33,12 +53,8 @@ export default function WeatherScreen() {
           return;
         }
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          },
-          (err) => {
-            setError(`Erro ao obter localização: ${err.message}`);
-          },
+          (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          (err) => setError(`Erro ao obter localização: ${err.message}`),
         );
         return;
       }
@@ -53,37 +69,51 @@ export default function WeatherScreen() {
     })();
   }, []);
 
-  const doFetch = useCallback(async (lat: number, lon: number) => {
-    setLoading(true);
-    setError('');
+  const fetchCurrent = useCallback(async () => {
+    setLoading(1);
+    setError(null);
     setData(null);
     try {
-      const result = await fetchByCoords(lat, lon);
-      setData(result);
-    } catch {
-      setError('Erro ao buscar. Tente novamente.');
+      const res = await fetchByCoords(coords.lat, coords.lon);
+      setData(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setLoading(false);
+      setLoading(0);
     }
-  }, []);
+  }, [coords]);
 
-  const fetchCurrent = useCallback(() => {
-    doFetch(coords.lat, coords.lon);
-  }, [coords, doFetch]);
-
-  const fetchManualCoords = useCallback(() => {
-    const lat = Number(latInput);
-    const lon = Number(lonInput);
-    if (isNaN(lat) || isNaN(lon)) {
-      setError('Insira valores numéricos válidos.');
-      return;
+  const fetchByEnterCoords: ModalProps['onSubmit'] = async (...args) => {
+    setLoading(2);
+    setError(null);
+    setData(null);
+    try {
+      const [lat, lon] = args as [number, number];
+      const res = await fetchByCoords(lat, lon);
+      setData(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(0);
     }
-    setCoords({ lat, lon });
-    doFetch(lat, lon);
-    setCoordsModalOpen(false);
-    setLatInput('');
-    setLonInput('');
-  }, [latInput, lonInput, doFetch]);
+  };
+
+  const fetchByCityName: ModalProps['onSubmit'] = async (...args) => {
+    setLoading(3);
+    setError(null);
+    setData(null);
+    try {
+      const [name] = args as [string];
+      const res = await fetchByCity(name);
+      setData(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(0);
+    }
+  };
+
+  const isLoading = loading > 0;
 
   return (
     <ThemedView style={styles.container}>
@@ -93,29 +123,23 @@ export default function WeatherScreen() {
             OpenWeather
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Use os botões abaixo para chamar a API OpenWeather.
+            Use os botões abaixo para consultar o clima via API OpenWeather.
           </ThemedText>
-
-          {coords.lat !== 0 || coords.lon !== 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              Localização: {coords.lat.toFixed(4)}, {coords.lon.toFixed(4)}
-            </ThemedText>
-          ) : null}
 
           <ThemedView style={styles.buttonsRow}>
             <Pressable
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
-                loading && styles.buttonDisabled,
+                isLoading && styles.buttonDisabled,
               ]}
-              disabled={loading}
+              disabled={isLoading}
               onPress={fetchCurrent}
             >
-              {loading ? (
-                <ActivityIndicator size="small" />
+              {isLoading && loading === 1 ? (
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <ThemedText style={styles.buttonText}>Atual localização</ThemedText>
+                <ThemedText style={styles.buttonText}>Localização atual</ThemedText>
               )}
             </Pressable>
 
@@ -124,88 +148,84 @@ export default function WeatherScreen() {
                 styles.button,
                 pressed && styles.buttonPressed,
               ]}
-              onPress={() => setCoordsModalOpen(true)}
+              onPress={() => setModalsOpen([true, false])}
             >
               <ThemedText style={styles.buttonText}>Inserir coordenadas</ThemedText>
             </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => setModalsOpen([false, true])}
+            >
+              <ThemedText style={styles.buttonText}>Buscar cidade</ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          <ThemedView style={styles.toggleRow}>
+            <ThemedText type="small">Salvar respostas</ThemedText>
+            <Switch
+              value={persistEnabled}
+              onValueChange={setPersistEnabled}
+              trackColor={{ false: '#ccc', true: '#eb6e4b' }}
+            />
           </ThemedView>
 
           {error ? (
-            <ThemedText themeColor="textSecondary" style={styles.error}>
-              {error}
-            </ThemedText>
+            <ThemedView type="backgroundElement" style={styles.errorBox}>
+              <ThemedText themeColor="textSecondary">{error}</ThemedText>
+            </ThemedView>
           ) : null}
 
-          <ThemedView type="backgroundElement" style={styles.dataBox}>
-            {data ? (
-              <ThemedText type="code" style={styles.jsonText}>
-                {JSON.stringify(data, null, 2)}
-              </ThemedText>
-            ) : (
-              <ThemedText themeColor="textSecondary" style={styles.placeholder}>
-                {loading ? 'Buscando...' : 'Pressione um botão'}
-              </ThemedText>
-            )}
-          </ThemedView>
+          {data ? (
+            <DataTable
+              rows={[
+                { name: 'Temperatura', data: `${data.main.temp} °C` },
+                { name: 'Sensação', data: `${data.main.feels_like} °C` },
+                { name: 'Clima', data: data.weather[0].description },
+                {
+                  name: 'Local',
+                  data: data.name
+                    ? `${data.name} — ${data.sys.country}`
+                    : 'Não encontrado',
+                },
+                { name: 'Coordenadas', data: `${data.coord.lat}, ${data.coord.lon}` },
+              ]}
+            />
+          ) : isLoading ? (
+            <ThemedText themeColor="textSecondary" style={styles.placeholder}>
+              Buscando...
+            </ThemedText>
+          ) : (
+            <ThemedText themeColor="textSecondary" style={styles.placeholder}>
+              Pressione um botão para buscar
+            </ThemedText>
+          )}
         </ScrollView>
       </SafeAreaView>
 
       <Modal
-        visible={coordsModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCoordsModalOpen(false)}
-      >
-        <ThemedView style={styles.modalOverlay}>
-          <ThemedView type="backgroundElement" style={styles.modalContent}>
-            <ThemedText type="subtitle">Inserir coordenadas</ThemedText>
+        open={modalsOpen[0]}
+        title="Inserir coordenadas"
+        onClose={() => setModalsOpen([false, false])}
+        onSubmit={fetchByEnterCoords}
+        inputs={[
+          { label: 'Latitude', placeholder: 'Ex: -23.5505', type: 'number' },
+          { label: 'Longitude', placeholder: 'Ex: -46.6333', type: 'number' },
+        ]}
+      />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Latitude"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={latInput}
-              onChangeText={setLatInput}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Longitude"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={lonInput}
-              onChangeText={setLonInput}
-            />
-
-            <ThemedView style={styles.modalButtons}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  styles.modalBtnCancel,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={() => {
-                  setCoordsModalOpen(false);
-                  setLatInput('');
-                  setLonInput('');
-                }}
-              >
-                <ThemedText>Cancelar</ThemedText>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  styles.modalBtnConfirm,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={fetchManualCoords}
-              >
-                <ThemedText>Buscar</ThemedText>
-              </Pressable>
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
-      </Modal>
+      <Modal
+        open={modalsOpen[1]}
+        title="Buscar por cidade"
+        onClose={() => setModalsOpen([false, false])}
+        onSubmit={fetchByCityName}
+        inputs={[
+          { label: 'Cidade', placeholder: 'Ex: London, Tokyo', type: 'text' },
+        ]}
+      />
     </ThemedView>
   );
 }
@@ -214,11 +234,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    flexDirection: 'row',
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
   },
   scrollContent: {
     padding: Spacing.four,
@@ -257,60 +275,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-  error: {
-    textAlign: 'center',
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
-  dataBox: {
+  errorBox: {
     alignSelf: 'stretch',
     padding: Spacing.three,
     borderRadius: Spacing.two,
-    minHeight: 100,
-  },
-  jsonText: {
-    fontSize: 11,
-    lineHeight: 16,
   },
   placeholder: {
     textAlign: 'center',
     paddingVertical: Spacing.four,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.four,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 400,
-    padding: Spacing.four,
-    borderRadius: Spacing.three,
-    gap: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: Spacing.one,
-    padding: Spacing.two,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
-  },
-  modalBtn: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.two,
-  },
-  modalBtnCancel: {
-    backgroundColor: '#ccc',
-  },
-  modalBtnConfirm: {
-    backgroundColor: '#eb6e4b',
   },
 });
