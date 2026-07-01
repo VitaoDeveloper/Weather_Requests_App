@@ -16,6 +16,7 @@ import type { ModalProps } from '@/types/ModalProps';
 import { parseApiError } from '@/utils/parseApiError';
 import { SendResponse } from '@/utils/sendResponse';
 import { DataTable } from '@/components/DataTable';
+import { HistoryModal } from '@/components/HistoryModal';
 import { Logo } from '@/components/Logo';
 import { Modal } from '@/components/Modal';
 import { ThemedText } from '@/components/themed-text';
@@ -28,6 +29,7 @@ export default function WeatherScreen() {
   const [loading, setLoading] = useState(0); // 0=none, 1=coords, 2=manual, 3=city
   const [coords, setCoords] = useState({ lat: 0, lon: 0 });
   const [modalsOpen, setModalsOpen] = useState([false, false]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [persistEnabled, setPersistEnabled] = useState(() => {
     if (typeof localStorage === 'undefined') return false;
@@ -177,9 +179,17 @@ export default function WeatherScreen() {
             <Switch
               value={persistEnabled}
               onValueChange={setPersistEnabled}
-              trackColor={{ false: '#ccc', true: '#eb6e4b' }}
+              trackColor={{ false: '#ccc', true: 'rgba(235,110,75,0.3)' }}
+              thumbColor={persistEnabled ? '#eb6e4b' : '#f4f3f4'}
             />
           </ThemedView>
+
+          <Pressable
+            style={({ pressed }) => [styles.historyBtn, pressed && styles.buttonPressed]}
+            onPress={() => setHistoryOpen(true)}
+          >
+            <ThemedText style={styles.historyBtnText}>Histórico</ThemedText>
+          </Pressable>
 
           {error ? (
             <ThemedView type="backgroundElement" style={styles.errorBox}>
@@ -234,6 +244,7 @@ export default function WeatherScreen() {
           { label: 'Cidade', placeholder: 'Ex: London, Tokyo', type: 'text' },
         ]}
       />
+      <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </ThemedView>
   );
 }
@@ -247,8 +258,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     padding: Spacing.four,
-    gap: Spacing.three,
+    gap: Spacing.five,
     alignItems: 'center',
     paddingBottom: BottomTabInset + Spacing.six,
   },
@@ -290,6 +303,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  historyBtn: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  historyBtnText: {
+    color: '#eb6e4b',
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
+    fontSize: 13,
   },
   errorBox: {
     alignSelf: 'stretch',

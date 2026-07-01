@@ -59,11 +59,17 @@ export function Modal({ open, onClose, onSubmit, title, inputs }: ModalProps) {
           </ScrollView>
 
           <ThemedView style={styles.footer}>
-            <Pressable style={[styles.btn, styles.btnCancel]} onPress={onClose}>
-              <ThemedText>Cancelar</ThemedText>
+            <Pressable
+              style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
+              onPress={onClose}
+            >
+              <ThemedText style={styles.btnText}>Cancelar</ThemedText>
             </Pressable>
-            <Pressable style={[styles.btn, styles.btnConfirm]} onPress={handleSubmit}>
-              <ThemedText style={{ color: '#fff', fontWeight: '600' }}>Buscar</ThemedText>
+            <Pressable
+              style={({ pressed }) => [styles.btnConfirm, pressed && styles.btnPressed]}
+              onPress={handleSubmit}
+            >
+              <ThemedText style={styles.btnConfirmText}>Buscar</ThemedText>
             </Pressable>
           </ThemedView>
         </ThemedView>
@@ -104,16 +110,34 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: Spacing.two,
     marginTop: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128,128,128,0.2)',
   },
   btn: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.two,
-  },
-  btnCancel: {
-    backgroundColor: '#ccc',
+    paddingVertical: Spacing.two - 1,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   btnConfirm: {
-    backgroundColor: '#eb6e4b',
+    paddingVertical: Spacing.two - 1,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(235,110,75,0.1)',
+  },
+  btnPressed: {
+    borderColor: 'rgba(235,110,75,0.5)',
+  },
+  btnText: {
+    color: '#eb6e4b',
+    fontSize: 15,
+  },
+  btnConfirmText: {
+    color: '#eb6e4b',
+    fontSize: 15,
   },
 });
