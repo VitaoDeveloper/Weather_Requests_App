@@ -8,6 +8,7 @@ export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ponytail: hydration flash guard, useSyncExternalStore if perf matters
     setHasHydrated(true);
   }, []);
 
