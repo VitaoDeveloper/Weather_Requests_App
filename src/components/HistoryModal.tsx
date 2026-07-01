@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { ApiResponse } from '@/types/ApiResponse';
 import type { StoredRecord } from '@/utils/sendResponse';
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function HistoryModal({ open, onClose }: Props) {
+  const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<StoredRecord[]>([]);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function HistoryModal({ open, onClose }: Props) {
       <ThemedView style={styles.overlay}>
         <ThemedView type="backgroundElement" style={styles.content}>
           <ThemedView style={styles.header}>
-            <ThemedText type="subtitle">Histórico</ThemedText>
+            <ThemedText type="subtitle">{t('history.title')}</ThemedText>
             <Pressable onPress={onClose}>
               <ThemedText style={styles.closeBtn}>✕</ThemedText>
             </Pressable>
@@ -40,7 +42,7 @@ export function HistoryModal({ open, onClose }: Props) {
 
           {records.length === 0 ? (
             <ThemedText themeColor="textSecondary" style={styles.empty}>
-              Nenhum registro salvo.
+              {t('history.empty')}
             </ThemedText>
           ) : (
             <ScrollView style={styles.list}>
@@ -56,7 +58,7 @@ export function HistoryModal({ open, onClose }: Props) {
                       {r.type}
                     </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {new Date(r.timestamp).toLocaleString('pt-BR')}
+                      {new Date(r.timestamp).toLocaleString(i18n.language)}
                     </ThemedText>
                   </ThemedView>
 
@@ -78,11 +80,12 @@ export function HistoryModal({ open, onClose }: Props) {
 }
 
 function HistoryItemPreview({ value }: { value: string }) {
+  const { t } = useTranslation();
   let data: ApiResponse | null = null;
   try {
     data = JSON.parse(value) as ApiResponse;
   } catch {
-    return <ThemedText type="small">Erro ao decodificar resposta.</ThemedText>;
+    return <ThemedText type="small">{t('history.previewError')}</ThemedText>;
   }
 
   return (

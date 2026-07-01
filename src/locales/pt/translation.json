@@ -1,0 +1,64 @@
+{
+  "app": {
+    "title": "OpenWeather",
+    "description": "Use os botões abaixo para consultar o clima via API OpenWeather.",
+    "loading": "Buscando...",
+    "tapButton": "Pressione um botão para buscar",
+    "notFound": "Não encontrado"
+  },
+  "buttons": {
+    "currentCoords": "Coordenadas atuais",
+    "enterCoords": "Inserir coordenadas",
+    "searchCity": "Buscar cidade"
+  },
+  "toggle": {
+    "saveResponses": "Salvar respostas"
+  },
+  "history": {
+    "title": "Histórico",
+    "btn": "Histórico",
+    "empty": "Nenhum registro salvo.",
+    "previewError": "Erro ao decodificar resposta."
+  },
+  "modal": {
+    "close": "Cancelar",
+    "submit": "Buscar",
+    "enterCoordsTitle": "Inserir coordenadas",
+    "enterCityTitle": "Buscar por cidade"
+  },
+  "fields": {
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "cityName": "Cidade"
+  },
+  "placeholders": {
+    "latitude": "Ex: -23.5505",
+    "longitude": "Ex: -46.6333",
+    "cityName": "Ex: London, Tokyo"
+  },
+  "table": {
+    "temperature": "Temperatura",
+    "feelsLike": "Sensação",
+    "weather": "Clima",
+    "city": "Local",
+    "coordenates": "Coordenadas"
+  },
+  "errors": {
+    "geoNotSupported": "Geolocalização não é suportada pelo seu navegador.",
+    "geoDenied": "Permissão de localização negada.",
+    "geoFailed": "Erro ao obter localização: {{message}}",
+    "decodeFail": "Erro ao decodificar resposta."
+  },
+  "apiErrors": {
+    "400": "Requisição inválida. Verifique os dados informados.",
+    "401": "Chave da API inválida ou não autorizada.",
+    "404": "Cidade não encontrada. Verifique o nome.",
+    "429": "Limite de requisições excedido. Aguarde e tente novamente.",
+    "500": "Erro interno do servidor. Tente novamente mais tarde.",
+    "502": "Servidor temporariamente indisponível. Tente novamente.",
+    "503": "Serviço indisponível no momento. Tente novamente.",
+    "network": "Sem conexão com a internet. Verifique sua rede.",
+    "unknown": "Erro desconhecido. Tente novamente.",
+    "fallback": "Erro na requisição (código {{code}})."
+  }
+}

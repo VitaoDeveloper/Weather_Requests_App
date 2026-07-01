@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { FormatInputType } from '@/utils/formatInputType';
 import type { ModalProps } from '@/types/ModalProps';
@@ -16,6 +17,7 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 
 export function Modal({ open, onClose, onSubmit, title, inputs }: ModalProps) {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, string>>(
     () => Object.fromEntries((inputs ?? []).map((i) => [i.label, ''])),
   );
@@ -63,13 +65,13 @@ export function Modal({ open, onClose, onSubmit, title, inputs }: ModalProps) {
               style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
               onPress={onClose}
             >
-              <ThemedText style={styles.btnText}>Cancelar</ThemedText>
+              <ThemedText style={styles.btnText}>{t('modal.close')}</ThemedText>
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.btnConfirm, pressed && styles.btnPressed]}
               onPress={handleSubmit}
             >
-              <ThemedText style={styles.btnConfirmText}>Buscar</ThemedText>
+              <ThemedText style={styles.btnConfirmText}>{t('modal.submit')}</ThemedText>
             </Pressable>
           </ThemedView>
         </ThemedView>

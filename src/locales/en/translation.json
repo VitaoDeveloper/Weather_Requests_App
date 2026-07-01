@@ -1,0 +1,64 @@
+{
+  "app": {
+    "title": "OpenWeather",
+    "description": "Use the buttons below to check the weather via the OpenWeather API.",
+    "loading": "Searching...",
+    "tapButton": "Press a button to search",
+    "notFound": "Not found"
+  },
+  "buttons": {
+    "currentCoords": "Current coordinates",
+    "enterCoords": "Enter coordinates",
+    "searchCity": "Search city"
+  },
+  "toggle": {
+    "saveResponses": "Save responses"
+  },
+  "history": {
+    "title": "History",
+    "btn": "History",
+    "empty": "No saved records.",
+    "previewError": "Error decoding response."
+  },
+  "modal": {
+    "close": "Cancel",
+    "submit": "Search",
+    "enterCoordsTitle": "Enter coordinates",
+    "enterCityTitle": "Search by city"
+  },
+  "fields": {
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "cityName": "City"
+  },
+  "placeholders": {
+    "latitude": "Ex: -23.5505",
+    "longitude": "Ex: -46.6333",
+    "cityName": "Ex: London, Tokyo"
+  },
+  "table": {
+    "temperature": "Temperature",
+    "feelsLike": "Feels like",
+    "weather": "Weather",
+    "city": "Location",
+    "coordenates": "Coordinates"
+  },
+  "errors": {
+    "geoNotSupported": "Geolocation is not supported by your browser.",
+    "geoDenied": "Location permission denied.",
+    "geoFailed": "Error getting location: {{message}}",
+    "decodeFail": "Error decoding response."
+  },
+  "apiErrors": {
+    "400": "Invalid request. Check the entered data.",
+    "401": "Invalid or unauthorized API key.",
+    "404": "City not found. Check the name.",
+    "429": "Request limit exceeded. Wait and try again.",
+    "500": "Internal server error. Try again later.",
+    "502": "Server temporarily unavailable. Try again.",
+    "503": "Service currently unavailable. Try again.",
+    "network": "No internet connection. Check your network.",
+    "unknown": "Unknown error. Try again.",
+    "fallback": "Request error (code {{code}})."
+  }
+}

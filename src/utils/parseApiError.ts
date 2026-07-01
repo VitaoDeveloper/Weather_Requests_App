@@ -1,11 +1,14 @@
+/* eslint-disable import/no-named-as-default-member */
+import i18n from 'i18next';
+
 const httpMessages: Record<number, string> = {
-  400: 'Requisição inválida. Verifique os dados informados.',
-  401: 'Chave da API inválida ou não autorizada.',
-  404: 'Cidade não encontrada. Verifique o nome.',
-  429: 'Limite de requisições excedido. Aguarde e tente novamente.',
-  500: 'Erro interno do servidor. Tente novamente mais tarde.',
-  502: 'Servidor temporariamente indisponível. Tente novamente.',
-  503: 'Serviço indisponível no momento. Tente novamente.',
+  400: 'apiErrors.400',
+  401: 'apiErrors.401',
+  404: 'apiErrors.404',
+  429: 'apiErrors.429',
+  500: 'apiErrors.500',
+  502: 'apiErrors.502',
+  503: 'apiErrors.503',
 };
 
 export class ApiError extends Error {
@@ -13,7 +16,7 @@ export class ApiError extends Error {
     public status: number,
     apiMessage?: string,
   ) {
-    super(httpMessages[status] || apiMessage || `Erro na requisição (código ${status}).`);
+    super(httpMessages[status] ? i18n.t(httpMessages[status]) : apiMessage || i18n.t('apiErrors.fallback', { code: status }));
     this.name = 'ApiError';
   }
 }
@@ -21,8 +24,8 @@ export class ApiError extends Error {
 export function parseApiError(err: unknown): string {
   if (err instanceof ApiError) return err.message;
   if (err instanceof TypeError && err.message === 'Failed to fetch') {
-    return 'Sem conexão com a internet. Verifique sua rede.';
+    return i18n.t('apiErrors.network');
   }
   if (err instanceof Error) return err.message;
-  return 'Erro desconhecido. Tente novamente.';
+  return i18n.t('apiErrors.unknown');
 }

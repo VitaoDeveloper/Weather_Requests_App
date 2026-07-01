@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Switch,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -24,6 +25,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 
 export default function WeatherScreen() {
+  const { t, i18n } = useTranslation();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(0); // 0=none, 1=coords, 2=manual, 3=city
@@ -53,25 +55,25 @@ export default function WeatherScreen() {
     (async () => {
       if (Platform.OS === 'web') {
         if (!navigator.geolocation) {
-          setError('Geolocalização não é suportada pelo seu navegador.');
+          setError(t('errors.geoNotSupported'));
           return;
         }
         navigator.geolocation.getCurrentPosition(
           (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-          (err) => setError(`Erro ao obter localização: ${err.message}`),
+          (err) => setError(t('errors.geoFailed', { message: err.message })),
         );
         return;
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Permissão de localização negada.');
+        setError(t('errors.geoDenied'));
         return;
       }
       const loc = await Location.getCurrentPositionAsync({});
       setCoords({ lat: loc.coords.latitude, lon: loc.coords.longitude });
     })();
-  }, []);
+  }, [t]);
 
   const fetchCurrent = useCallback(async () => {
     setLoading(1);
@@ -126,10 +128,10 @@ export default function WeatherScreen() {
           <Logo size={200} />
 
           <ThemedText type="title" style={styles.title}>
-            OpenWeather
+            {t('app.title')}
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Use os botões abaixo para consultar o clima via API OpenWeather.
+            {t('app.description')}
           </ThemedText>
 
           <ThemedView style={styles.buttonsRow}>
@@ -145,7 +147,7 @@ export default function WeatherScreen() {
               {isLoading && loading === 1 ? (
                 <ActivityIndicator size="small" color="#eb6e4b" />
               ) : (
-                <ThemedText style={styles.buttonText}>Coordenadas atuais</ThemedText>
+                <ThemedText style={styles.buttonText}>{t('buttons.currentCoords')}</ThemedText>
               )}
             </Pressable>
 
@@ -158,7 +160,7 @@ export default function WeatherScreen() {
               disabled={isLoading}
               onPress={() => setModalsOpen([true, false])}
             >
-              <ThemedText style={styles.buttonText}>Inserir coordenadas</ThemedText>
+              <ThemedText style={styles.buttonText}>{t('buttons.enterCoords')}</ThemedText>
             </Pressable>
 
             <Pressable
@@ -170,12 +172,12 @@ export default function WeatherScreen() {
               disabled={isLoading}
               onPress={() => setModalsOpen([false, true])}
             >
-              <ThemedText style={styles.buttonText}>Buscar cidade</ThemedText>
+              <ThemedText style={styles.buttonText}>{t('buttons.searchCity')}</ThemedText>
             </Pressable>
           </ThemedView>
 
           <ThemedView style={styles.toggleRow}>
-            <ThemedText type="small">Salvar respostas</ThemedText>
+            <ThemedText type="small">{t('toggle.saveResponses')}</ThemedText>
             <Switch
               value={persistEnabled}
               onValueChange={setPersistEnabled}
@@ -188,8 +190,31 @@ export default function WeatherScreen() {
             style={({ pressed }) => [styles.historyBtn, pressed && styles.buttonPressed]}
             onPress={() => setHistoryOpen(true)}
           >
-            <ThemedText style={styles.historyBtnText}>Histórico</ThemedText>
+            <ThemedText style={styles.historyBtnText}>{t('history.btn')}</ThemedText>
           </Pressable>
+
+          <ThemedView style={styles.langRow}>
+            {(['en', 'pt', 'ru'] as const).map((l) => (
+              <Pressable
+                key={l}
+                style={({ pressed }) => [
+                  styles.langBtn,
+                  i18n.language?.startsWith(l) && styles.langBtnActive,
+                  pressed && styles.langBtnPressed,
+                ]}
+                onPress={() => i18n.changeLanguage(l)}
+              >
+                <ThemedText
+                  style={[
+                    styles.langBtnText,
+                    i18n.language?.startsWith(l) && styles.langBtnTextActive,
+                  ]}
+                >
+                  {l.toUpperCase()}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ThemedView>
 
           {error ? (
             <ThemedView type="backgroundElement" style={styles.errorBox}>
@@ -200,25 +225,25 @@ export default function WeatherScreen() {
           {data ? (
             <DataTable
               rows={[
-                { name: 'Temperatura', data: `${data.main.temp} °C` },
-                { name: 'Sensação', data: `${data.main.feels_like} °C` },
-                { name: 'Clima', data: data.weather[0].description },
+                { name: t('table.temperature'), data: `${data.main.temp} °C` },
+                { name: t('table.feelsLike'), data: `${data.main.feels_like} °C` },
+                { name: t('table.weather'), data: data.weather[0].description },
                 {
-                  name: 'Local',
+                  name: t('table.city'),
                   data: data.name
                     ? `${data.name} — ${data.sys.country}`
-                    : 'Não encontrado',
+                    : t('app.notFound'),
                 },
-                { name: 'Coordenadas', data: `${data.coord.lat}, ${data.coord.lon}` },
+                { name: t('table.coordenates'), data: `${data.coord.lat}, ${data.coord.lon}` },
               ]}
             />
           ) : isLoading ? (
             <ThemedText themeColor="textSecondary" style={styles.placeholder}>
-              Buscando...
+              {t('app.loading')}
             </ThemedText>
           ) : (
             <ThemedText themeColor="textSecondary" style={styles.placeholder}>
-              Pressione um botão para buscar
+              {t('app.tapButton')}
             </ThemedText>
           )}
         </ScrollView>
@@ -226,22 +251,22 @@ export default function WeatherScreen() {
 
       <Modal
         open={modalsOpen[0]}
-        title="Inserir coordenadas"
+        title={t('modal.enterCoordsTitle')}
         onClose={() => setModalsOpen([false, false])}
         onSubmit={fetchByEnterCoords}
         inputs={[
-          { label: 'Latitude', placeholder: 'Ex: -23.5505', type: 'number' },
-          { label: 'Longitude', placeholder: 'Ex: -46.6333', type: 'number' },
+          { label: t('fields.latitude'), placeholder: t('placeholders.latitude'), type: 'number' },
+          { label: t('fields.longitude'), placeholder: t('placeholders.longitude'), type: 'number' },
         ]}
       />
 
       <Modal
         open={modalsOpen[1]}
-        title="Buscar por cidade"
+        title={t('modal.enterCityTitle')}
         onClose={() => setModalsOpen([false, false])}
         onSubmit={fetchByCityName}
         inputs={[
-          { label: 'Cidade', placeholder: 'Ex: London, Tokyo', type: 'text' },
+          { label: t('fields.cityName'), placeholder: t('placeholders.cityName'), type: 'text' },
         ]}
       />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
@@ -324,5 +349,29 @@ const styles = StyleSheet.create({
   placeholder: {
     textAlign: 'center',
     paddingVertical: Spacing.four,
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  langBtn: {
+    paddingVertical: Spacing.half,
+    paddingHorizontal: Spacing.two,
+    borderRadius: 4,
+  },
+  langBtnActive: {
+    backgroundColor: 'rgba(235, 110, 75, 0.15)',
+  },
+  langBtnPressed: {
+    opacity: 0.6,
+  },
+  langBtnText: {
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
+    fontSize: 12,
+    color: '#999',
+  },
+  langBtnTextActive: {
+    color: '#eb6e4b',
+    fontWeight: '700',
   },
 });
