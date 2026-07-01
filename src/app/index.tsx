@@ -14,10 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchByCity, fetchByCoords } from '@/api/weather';
 import type { ApiResponse } from '@/types/ApiResponse';
 import type { ModalProps } from '@/types/ModalProps';
-import { parseApiError } from '@/utils/parseApiError';
+import { parseApiError, ApiError } from '@/utils/parseApiError';
 import { SendResponse } from '@/utils/sendResponse';
+import { getKey } from '@/utils/keyStore';
 import { DataTable } from '@/components/DataTable';
 import { HistoryModal } from '@/components/HistoryModal';
+import { KeySetupModal } from '@/components/KeySetupModal';
 import { Logo } from '@/components/Logo';
 import { Modal } from '@/components/Modal';
 import { ThemedText } from '@/components/themed-text';
@@ -32,6 +34,21 @@ export default function WeatherScreen() {
   const [coords, setCoords] = useState({ lat: 0, lon: 0 });
   const [modalsOpen, setModalsOpen] = useState([false, false]);
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // BYOK state
+  const [keyReady, setKeyReady] = useState<boolean | null>(null); // null = checking
+  const [keySetupOpen, setKeySetupOpen] = useState(false);
+  const [currentKey, setCurrentKey] = useState<string | undefined>();
+  const [keyMgmtOpen, setKeyMgmtOpen] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const has = await getKey();
+      setKeyReady(!!has);
+      if (has) setCurrentKey(has ?? undefined);
+      if (!has) setKeySetupOpen(true);
+    })();
+  }, []);
 
   const [persistEnabled, setPersistEnabled] = useState(() => {
     if (typeof localStorage === 'undefined') return false;
@@ -75,6 +92,15 @@ export default function WeatherScreen() {
     })();
   }, [t]);
 
+  const handleApiError = useCallback((err: unknown) => {
+    if (err instanceof ApiError && err.status === 401) {
+      setError(t('byokErrors.keyRevoked'));
+      setKeySetupOpen(true);
+      return;
+    }
+    setError(parseApiError(err));
+  }, [t]);
+
   const fetchCurrent = useCallback(async () => {
     setLoading(1);
     setError(null);
@@ -83,11 +109,11 @@ export default function WeatherScreen() {
       const res = await fetchByCoords(coords.lat, coords.lon);
       setData(res);
     } catch (err) {
-      setError(parseApiError(err));
+      handleApiError(err);
     } finally {
       setLoading(0);
     }
-  }, [coords]);
+  }, [coords, handleApiError]);
 
   const fetchByEnterCoords: ModalProps['onSubmit'] = async (...args) => {
     setLoading(2);
@@ -98,7 +124,7 @@ export default function WeatherScreen() {
       const res = await fetchByCoords(lat, lon);
       setData(res);
     } catch (err) {
-      setError(parseApiError(err));
+      handleApiError(err);
     } finally {
       setLoading(0);
     }
@@ -113,13 +139,28 @@ export default function WeatherScreen() {
       const res = await fetchByCity(name);
       setData(res);
     } catch (err) {
-      setError(parseApiError(err));
+      handleApiError(err);
     } finally {
       setLoading(0);
     }
   };
 
+  const handleKeySetupDone = useCallback(async () => {
+    setKeyReady(true);
+    setKeySetupOpen(false);
+    setKeyMgmtOpen(false);
+    const k = await getKey();
+    setCurrentKey(k ?? undefined);
+  }, []);
+
+  const handleKeyMgmtClose = useCallback(() => {
+    setKeyMgmtOpen(false);
+  }, []);
+
   const isLoading = loading > 0;
+
+  // Don't render anything until we know key state
+  if (keyReady === null) return null;
 
   return (
     <ThemedView style={styles.container}>
@@ -192,6 +233,18 @@ export default function WeatherScreen() {
           >
             <ThemedText style={styles.historyBtnText}>{t('history.btn')}</ThemedText>
           </Pressable>
+
+          {/* Key management row */}
+          {currentKey ? (
+            <Pressable
+              style={({ pressed }) => [styles.keyMgmtBtn, pressed && styles.buttonPressed]}
+              onPress={() => setKeyMgmtOpen(true)}
+            >
+              <ThemedText style={styles.keyMgmtText}>
+                {t('byok.currentKey', { masked: maskKey(currentKey) })}
+              </ThemedText>
+            </Pressable>
+          ) : null}
 
           <ThemedView style={styles.langRow}>
             {(['en', 'pt', 'ru'] as const).map((l) => (
@@ -269,9 +322,31 @@ export default function WeatherScreen() {
           { label: t('fields.cityName'), placeholder: t('placeholders.cityName'), type: 'text' },
         ]}
       />
+
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
+
+      <KeySetupModal
+        open={keySetupOpen}
+        onboarding={!currentKey}
+        currentKey={currentKey}
+        onDone={handleKeySetupDone}
+        onClose={() => setKeySetupOpen(false)}
+      />
+
+      <KeySetupModal
+        open={keyMgmtOpen}
+        onboarding={false}
+        currentKey={currentKey}
+        onDone={handleKeySetupDone}
+        onClose={handleKeyMgmtClose}
+      />
     </ThemedView>
   );
+}
+
+function maskKey(key: string): string {
+  if (key.length <= 6) return '••••••';
+  return '••••••••' + key.slice(-4);
 }
 
 const styles = StyleSheet.create({
@@ -337,6 +412,18 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   historyBtnText: {
+    color: '#eb6e4b',
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
+    fontSize: 13,
+  },
+  keyMgmtBtn: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  keyMgmtText: {
     color: '#eb6e4b',
     fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
     fontSize: 13,

@@ -1,1 +1,2 @@
-export const API_KEY = '10bb43980a5ce451e854eaa3a93ea4de'
+// ponytail: BYOK — key is no longer hardcoded; stored per-user via expo-secure-store (native) / localStorage (web)
+export const API_KEY = '';

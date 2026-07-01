@@ -49,6 +49,28 @@
     "geoFailed": "Erro ao obter localização: {{message}}",
     "decodeFail": "Erro ao decodificar resposta."
   },
+  "byok": {
+    "title": "Chave da API OpenWeather",
+    "description": "Este app usa a API da OpenWeather. Você precisa de uma chave de API pessoal (gratuita) para usá-lo.",
+    "registerLink": "Criar conta gratuita",
+    "label": "Sua chave de API",
+    "placeholder": "Cole sua chave aqui",
+    "save": "Salvar e testar",
+    "validating": "Validando...",
+    "changeTitle": "Alterar chave da API",
+    "currentKey": "Chave atual: {{masked}}",
+    "change": "Alterar chave",
+    "remove": "Remover chave",
+    "removeConfirm": "Tem certeza? Isso removerá sua chave salva.",
+    "confirm": "Sim, remover",
+    "cancel": "Cancelar"
+  },
+  "byokErrors": {
+    "invalid": "Chave de API inválida. Verifique e tente novamente.",
+    "network": "Erro de rede ao validar a chave. Verifique sua conexão.",
+    "noKey": "Nenhuma chave de API configurada.",
+    "keyRevoked": "A chave da API foi rejeitada (possivelmente revogada). Configure uma nova."
+  },
   "apiErrors": {
     "400": "Requisição inválida. Verifique os dados informados.",
     "401": "Chave da API inválida ou não autorizada.",

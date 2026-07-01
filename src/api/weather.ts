@@ -1,7 +1,8 @@
+/* eslint-disable import/no-named-as-default-member */
 import i18n from 'i18next';
-import { API_KEY } from '@/constants/api';
 import type { ApiResponse } from '@/types/ApiResponse';
 import { ApiError } from '@/utils/parseApiError';
+import { getKey } from '@/utils/keyStore';
 
 const BASE = 'https://api.openweathermap.org/data/2.5';
 
@@ -14,7 +15,9 @@ function langParam(): string {
 }
 
 async function api(path: string): Promise<ApiResponse> {
-  const res = await fetch(`${BASE}${path}&appid=${API_KEY}&units=metric&lang=${langParam()}`);
+  const key = await getKey();
+  if (!key) throw new ApiError(401, i18n.t('byokErrors.noKey'));
+  const res = await fetch(`${BASE}${path}&appid=${key}&units=metric&lang=${langParam()}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.message);
@@ -28,4 +31,13 @@ export function fetchByCoords(lat: number, lon: number): Promise<ApiResponse> {
 
 export function fetchByCity(cityName: string): Promise<ApiResponse> {
   return api(`/weather?q=${encodeURIComponent(cityName)}`);
+}
+
+/** Lightweight validation call — used before persisting a user-provided key */
+export async function validateKey(key: string): Promise<boolean> {
+  const res = await fetch(`${BASE}/weather?lat=0&lon=0&appid=${key}&units=metric`);
+  if (res.ok) return true;
+  if (res.status === 401) return false; // invalid key — expected during validation
+  const body = await res.json().catch(() => ({}));
+  throw new ApiError(res.status, body.message);
 }

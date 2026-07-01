@@ -49,6 +49,28 @@
     "geoFailed": "Error getting location: {{message}}",
     "decodeFail": "Error decoding response."
   },
+  "byok": {
+    "title": "OpenWeather API Key",
+    "description": "This app uses the OpenWeather API. You need a free personal API key to use it.",
+    "registerLink": "Create free account",
+    "label": "Your API key",
+    "placeholder": "Paste your key here",
+    "save": "Save & validate",
+    "validating": "Validating...",
+    "changeTitle": "Change API key",
+    "currentKey": "Current key: {{masked}}",
+    "change": "Change key",
+    "remove": "Remove key",
+    "removeConfirm": "Are you sure? This will remove your saved key.",
+    "confirm": "Yes, remove",
+    "cancel": "Cancel"
+  },
+  "byokErrors": {
+    "invalid": "Invalid API key. Check and try again.",
+    "network": "Network error validating the key. Check your connection.",
+    "noKey": "No API key configured.",
+    "keyRevoked": "The API key was rejected (possibly revoked). Set up a new one."
+  },
   "apiErrors": {
     "400": "Invalid request. Check the entered data.",
     "401": "Invalid or unauthorized API key.",
