@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchByCity, fetchByCoords } from '@/api/weather';
 import type { ApiResponse } from '@/types/ApiResponse';
 import type { ModalProps } from '@/types/ModalProps';
+import { parseApiError } from '@/utils/parseApiError';
 import { SendResponse } from '@/utils/sendResponse';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
@@ -77,7 +78,7 @@ export default function WeatherScreen() {
       const res = await fetchByCoords(coords.lat, coords.lon);
       setData(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(parseApiError(err));
     } finally {
       setLoading(0);
     }
@@ -92,7 +93,7 @@ export default function WeatherScreen() {
       const res = await fetchByCoords(lat, lon);
       setData(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(parseApiError(err));
     } finally {
       setLoading(0);
     }
@@ -107,7 +108,7 @@ export default function WeatherScreen() {
       const res = await fetchByCity(name);
       setData(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(parseApiError(err));
     } finally {
       setLoading(0);
     }
