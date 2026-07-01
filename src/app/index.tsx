@@ -16,6 +16,7 @@ import type { ModalProps } from '@/types/ModalProps';
 import { parseApiError } from '@/utils/parseApiError';
 import { SendResponse } from '@/utils/sendResponse';
 import { DataTable } from '@/components/DataTable';
+import { Logo } from '@/components/Logo';
 import { Modal } from '@/components/Modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -120,6 +121,8 @@ export default function WeatherScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Logo size={200} />
+
           <ThemedText type="title" style={styles.title}>
             OpenWeather
           </ThemedText>
@@ -138,9 +141,9 @@ export default function WeatherScreen() {
               onPress={fetchCurrent}
             >
               {isLoading && loading === 1 ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#eb6e4b" />
               ) : (
-                <ThemedText style={styles.buttonText}>Localização atual</ThemedText>
+                <ThemedText style={styles.buttonText}>Coordenadas atuais</ThemedText>
               )}
             </Pressable>
 
@@ -148,7 +151,9 @@ export default function WeatherScreen() {
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
+                isLoading && styles.buttonDisabled,
               ]}
+              disabled={isLoading}
               onPress={() => setModalsOpen([true, false])}
             >
               <ThemedText style={styles.buttonText}>Inserir coordenadas</ThemedText>
@@ -158,7 +163,9 @@ export default function WeatherScreen() {
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
+                isLoading && styles.buttonDisabled,
               ]}
+              disabled={isLoading}
               onPress={() => setModalsOpen([false, true])}
             >
               <ThemedText style={styles.buttonText}>Buscar cidade</ThemedText>
@@ -259,22 +266,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    backgroundColor: '#eb6e4b',
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.two,
-    minWidth: 120,
+    paddingVertical: Spacing.one + 1,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 5,
+    minWidth: 130,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(235, 110, 75, 0.1)',
   },
   buttonPressed: {
-    opacity: 0.7,
+    borderColor: 'rgba(235, 110, 75, 0.5)',
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#eb6e4b',
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
+    fontSize: 15,
   },
   toggleRow: {
     flexDirection: 'row',
