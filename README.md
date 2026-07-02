@@ -1,56 +1,75 @@
-# Welcome to your Expo app 👋
+# Weather Requests App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A cross-platform mobile and web app that queries the [OpenWeather API](https://openweathermap.org/api) for current weather conditions.
 
-## Get started
+Built with [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/) and React Native.
+
+## Features
+
+- **3 lookup methods**: GPS coordinates, manual lat/lon entry, or city name search
+- **Bring Your Own Key (BYOK)**: no hardcoded API keys — supply your own OpenWeather API key, stored securely via `expo-secure-store`
+- **Light/dark mode**: automatic system theme detection with web hydration guard
+- **Internationalization**: English, Portuguese (fallback), and Russian — switch at runtime
+- **History**: persist and review past lookups to `localStorage`
+- **Web static export**: output configured for static hosting
+
+## Getting started
 
 1. Install dependencies
 
    ```bash
-   npm install
+   pnpm install
    ```
 
-2. Start the app
+2. Start the dev server
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   For web-only:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npx expo start --web
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+3. On first launch, tap the API key field to enter your [OpenWeather API key](https://home.openweathermap.org/api_keys).
 
-## Get a fresh project
+## Commands
 
-When you're ready, run:
+| Command | Purpose |
+|---|---|
+| `pnpm install` | Install dependencies |
+| `npx expo start` | Start dev server |
+| `npx expo start --web` | Web-only dev server |
+| `npm run lint` | Run ESLint |
 
-```bash
-npm run reset-project
+## Project structure
+
+```
+src/
+├── app/               # Expo Router file-based routing
+│   ├── _layout.tsx    # Root Stack layout
+│   └── index.tsx      # Main weather screen
+├── api/               # OpenWeather API client
+├── components/        # Reusable UI components
+├── constants/         # Theme & API config
+├── hooks/             # Custom hooks (theme, color-scheme)
+├── locales/           # i18n translations (en, pt, ru)
+├── types/             # TypeScript type definitions
+└── utils/             # Utilities (storage, error parsing, formatting)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Tech stack
 
-### Other setup steps
+- **Expo SDK 56** — cross-platform framework
+- **expo-router** — file-based routing
+- **expo-secure-store** — encrypted key storage
+- **expo-location** — device GPS access
+- **i18next / react-i18next** — internationalization
+- **react-native-svg** — SVG rendering (logo)
+- **TypeScript** — strict mode
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## License
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+MIT
